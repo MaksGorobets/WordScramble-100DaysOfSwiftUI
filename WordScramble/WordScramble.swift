@@ -1,5 +1,5 @@
 //
-//  WorldScrambleApp.swift
+//  WordScrambleApp.swift
 //  WorldScramble
 //
 //  Created by Maks Winters on 03.11.2023.
