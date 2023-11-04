@@ -8,10 +8,14 @@
 import SwiftUI
 
 struct ContentView: View {
+    let colors = [Color.yellow, Color.blue, Color.purple, Color.red, Color.green]
+    @State private var mainColor: Color = .yellow
+    
     @State private var rootWord = ""
     @State private var newWord = ""
     @State private var usedWords = [String]()
     @State private var score = 0
+    @AppStorage("PREV_SCORE") private var bestScore = 0
     
     @State private var errorTitle = ""
     @State private var errorMessage = ""
@@ -19,37 +23,129 @@ struct ContentView: View {
     
     var body: some View {
         NavigationStack {
-            List {
-                Section("Input word") {
-                    TextField("New world", text: $newWord)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-                }
-                Section("Score:") {
-                    Text(String(score))
-                }
-                Section("Your words") {
-                    ForEach(usedWords, id: \.self) { word in
+            ZStack {
+                List {
+                    Section {
                         HStack {
-                            Image(systemName: "\(word.count).circle")
-                            Text(word)
+                            ZStack {
+                                Image(imageForColor(color: mainColor))
+                                    .resizable()
+                                    .clipShape(RoundedRectangle(cornerRadius: 20))
+                                VStack {
+                                    Text("Score")
+                                        .font(.system(size: 25, weight: .heavy, design: .rounded))
+                                    Text(score.description)
+                                        .font(.system(size: 25, weight: .medium, design: .rounded))
+                                }
+                                .foregroundStyle(.white)
+                                .shadow(color: .black, radius: 5)
+                            }
+                            ZStack {
+                                Image(imageForColor(color: mainColor))
+                                    .resizable()
+                                    .clipShape(RoundedRectangle(cornerRadius: 20))
+                                    .scaleEffect(x: -1, y: -1)
+                                VStack {
+                                    Text("Best score")
+                                        .font(.system(size: 25, weight: .heavy, design: .rounded))
+                                    Text(bestScore.description)
+                                        .font(.system(size: 25, weight: .medium, design: .rounded))
+                                }
+                                .foregroundStyle(.white)
+                                .shadow(color: .black, radius: 5)
+                            }
+                        }
+                    }
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
+                    .frame(height: 90)
+                    Section {
+                        VStack {
+                            HStack {
+                                Text("Your word is...")
+                                    .font(.system(size: 36, weight: .heavy, design: .rounded))
+                                    .foregroundStyle(mainColor)
+                                Spacer()
+                            }
+                            HStack {
+                                Spacer()
+                                Text(rootWord)
+                                    .font(.system(size: 36, weight: .heavy, design: .rounded))
+                            }
+                        }
+                    }
+                    .frame(height: 150)
+                    Section("Input word") {
+                        TextField("New world", text: $newWord)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled()
+                    }
+                    Section("Your words") {
+                        ForEach(usedWords, id: \.self) { word in
+                            HStack {
+                                Image(systemName: "\(word.count).circle")
+                                    .foregroundStyle(mainColor)
+                                    .shadow(radius: 1)
+                                Text(word)
+                            }
                         }
                     }
                 }
-            }
-            .navigationTitle(rootWord)
-            .onSubmit(addNewWord)
-            .onAppear(perform: startGame)
-            .alert(errorTitle, isPresented: $isShown) { } message: {
-                Text(errorMessage)
-            }
-            .toolbar{
-                Button("Restart", action: startGame)
+                .navigationTitle("WordScramble")
+                .navigationBarTitleDisplayMode(.inline)
+                .onSubmit(addNewWord)
+                .onAppear(perform: startGame)
+                .alert(errorTitle, isPresented: $isShown) { } message: {
+                    Text(errorMessage)
+                }
+                .toolbar{
+                    Picker("Color", selection: $mainColor) {
+                        ForEach(colors, id: \.self) { color in
+                            Text(color.description.capitalized)
+                        }
+                    }
+                }
+                VStack {
+                    Spacer()
+                    HStack {
+                        Spacer()
+                        Button{
+                            startGame()
+                        } label: {
+                            Image(systemName: "arrow.left.arrow.right")
+                                .font(.system(size: 30))
+                                .frame(width: 50, height: 50)
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .tint(mainColor)
+                        .clipShape(Circle())
+                        .shadow(radius: 5)
+                        .padding()
+                    }
+                }
             }
         }
     }
     
+    func imageForColor(color: Color) -> String {
+        switch color {
+        case .red:
+            "red"
+        case .green:
+            "green"
+        case .blue:
+            "blue"
+        case .purple:
+            "purple"
+        case .yellow:
+            "yellow"
+        default:
+            "red"
+        }
+    }
+    
     func addNewWord() {
+        
         let answer = newWord.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
         
         guard answer.count > 0 else { return }
@@ -75,7 +171,7 @@ struct ContentView: View {
         }
         
         guard isPossible(word: answer) else {
-            wordError(title: "Not possible", message: "You can't assemble this word from \(rootWord)!")
+            wordError(title: "Not possible", message: "You can't put together this word from \(rootWord)!")
             return
         }
         
@@ -86,6 +182,9 @@ struct ContentView: View {
         score += 25
         
         newWord = ""
+        
+        let best = bestScore
+        score > best ? bestScore = score : nil
     }
     
     func startGame() {
