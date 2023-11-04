@@ -11,6 +11,7 @@ struct ContentView: View {
     @State private var rootWord = ""
     @State private var newWord = ""
     @State private var usedWords = [String]()
+    @State private var score = 0
     
     @State private var errorTitle = ""
     @State private var errorMessage = ""
@@ -23,6 +24,9 @@ struct ContentView: View {
                     TextField("New world", text: $newWord)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
+                }
+                Section("Score:") {
+                    Text(String(score))
                 }
                 Section("Your words") {
                     ForEach(usedWords, id: \.self) { word in
@@ -39,6 +43,9 @@ struct ContentView: View {
             .alert(errorTitle, isPresented: $isShown) { } message: {
                 Text(errorMessage)
             }
+            .toolbar{
+                Button("Restart", action: startGame)
+            }
         }
     }
     
@@ -46,6 +53,16 @@ struct ContentView: View {
         let answer = newWord.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
         
         guard answer.count > 0 else { return }
+        
+        guard isNotRootWord(word: answer) else {
+            wordError(title: "Not allowed!", message: "You cannot use a starting word!")
+            return
+        }
+        
+        guard isLongEnough(word: answer) else {
+            wordError(title: "Too short!", message: "Your word is too short with \(answer.count) letter\(answer.count == 1 ? "" : "s")")
+            return
+        }
         
         guard isOriginal(word: answer) else {
             wordError(title: "Not a new word", message: "You have already typed this word before.")
@@ -66,10 +83,15 @@ struct ContentView: View {
             usedWords.insert(answer, at: 0)
         }
         
+        score += 25
+        
         newWord = ""
     }
     
     func startGame() {
+        score = 0
+        newWord = ""
+        usedWords.removeAll()
         if let startWorldURL = Bundle.main.url(forResource: "start", withExtension: "txt") {
             if let startWords = try? String(contentsOf: startWorldURL) {
                 let allWords = startWords.components(separatedBy: "\n")
@@ -80,6 +102,14 @@ struct ContentView: View {
             fatalError("Could not load words from a bundle.")
             
         }
+    }
+    
+    func isNotRootWord(word: String) -> Bool {
+        word != rootWord ? true : false
+    }
+    
+    func isLongEnough(word: String) -> Bool {
+        word.count <= 3 ? false : true
     }
     
     func isOriginal(word: String) -> Bool {
