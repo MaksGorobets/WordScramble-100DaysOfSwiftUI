@@ -44,11 +44,11 @@ struct ContentView: View {
                                         .font(.system(size: 25, weight: .medium, design: .rounded))
                                         .contentTransition(.numericText())
                                 }
-                                .accessibilityElement()
-                                .accessibilityLabel("Score, \(score)")
                                 .foregroundStyle(.white)
                                 .shadow(color: .black, radius: 5)
                             }
+                            .accessibilityElement()
+                            .accessibilityLabel("Score, \(score)")
                             ZStack {
                                 Image(imageForColor(color: mainColor))
                                     .resizable()
@@ -61,11 +61,12 @@ struct ContentView: View {
                                         .font(.system(size: 25, weight: .medium, design: .rounded))
                                         .contentTransition(.numericText())
                                 }
-                                .accessibilityElement()
-                                .accessibilityLabel("Best score, \(score)")
                                 .foregroundStyle(.white)
                                 .shadow(color: .black, radius: 5)
                             }
+                            .accessibilityElement()
+                            .accessibilityLabel("Best score, \(score)")
+                            .accessibilityValue("Double tap to reset")
                             .onTapGesture {
                                 resetBest()
                             }
@@ -89,7 +90,8 @@ struct ContentView: View {
                             }
                         }
                         .accessibilityElement()
-                        .accessibilityLabel("Your word is: \(rootWord)")
+                        .accessibilityLabel("Your word is")
+                        .accessibilityValue(rootWord)
                     }
                     .frame(height: 150)
                     Section("Input word") {
@@ -120,7 +122,7 @@ struct ContentView: View {
                     Text(errorMessage)
                 }
                 .toolbar{
-                    Picker("Color", selection: $mainColor) {
+                    Picker("Color picker", selection: $mainColor) {
                         ForEach(colors, id: \.self) { color in
                             Text(color.description.capitalized)
                         }
