@@ -8,8 +8,14 @@
 import SwiftUI
 
 struct ContentView: View {
-    let colors = [Color.yellow, Color.blue, Color.purple, Color.red, Color.green]
-    @State private var mainColor: Color = .yellow
+    let colors = [Color.yellow, 
+                  Color.blue,
+                  Color.purple,
+                  Color.red,
+                  Color.green
+                 ]
+    @AppStorage("SET_COLOR") private var setColor = "yellow"
+    @State private var mainColor: Color
     
     @State private var rootWord = ""
     @State private var newWord = ""
@@ -36,7 +42,10 @@ struct ContentView: View {
                                         .font(.system(size: 25, weight: .heavy, design: .rounded))
                                     Text(score.description)
                                         .font(.system(size: 25, weight: .medium, design: .rounded))
+                                        .contentTransition(.numericText())
                                 }
+                                .accessibilityElement()
+                                .accessibilityLabel("Score, \(score)")
                                 .foregroundStyle(.white)
                                 .shadow(color: .black, radius: 5)
                             }
@@ -50,9 +59,15 @@ struct ContentView: View {
                                         .font(.system(size: 25, weight: .heavy, design: .rounded))
                                     Text(bestScore.description)
                                         .font(.system(size: 25, weight: .medium, design: .rounded))
+                                        .contentTransition(.numericText())
                                 }
+                                .accessibilityElement()
+                                .accessibilityLabel("Best score, \(score)")
                                 .foregroundStyle(.white)
                                 .shadow(color: .black, radius: 5)
+                            }
+                            .onTapGesture {
+                                resetBest()
                             }
                         }
                     }
@@ -73,6 +88,8 @@ struct ContentView: View {
                                     .font(.system(size: 36, weight: .heavy, design: .rounded))
                             }
                         }
+                        .accessibilityElement()
+                        .accessibilityLabel("Your word is: \(rootWord)")
                     }
                     .frame(height: 150)
                     Section("Input word") {
@@ -88,9 +105,13 @@ struct ContentView: View {
                                     .shadow(radius: 1)
                                 Text(word)
                             }
+                            .accessibilityElement()
+                            .accessibilityLabel(word)
+                            .accessibilityHint("\(word.count) letters")
                         }
                     }
                 }
+                .animation(.linear, value: mainColor)
                 .navigationTitle("WordScramble")
                 .navigationBarTitleDisplayMode(.inline)
                 .onSubmit(addNewWord)
@@ -104,18 +125,23 @@ struct ContentView: View {
                             Text(color.description.capitalized)
                         }
                     }
+                    .onChange(of: mainColor) { oldColor, color in
+                        setColor = color.description
+                        print(color.description)
+                    }
                 }
                 VStack {
                     Spacer()
                     HStack {
                         Spacer()
-                        Button{
+                        Button {
                             startGame()
                         } label: {
                             Image(systemName: "arrow.left.arrow.right")
                                 .font(.system(size: 30))
                                 .frame(width: 50, height: 50)
                         }
+                        .accessibilityLabel("Start again")
                         .buttonStyle(.borderedProminent)
                         .tint(mainColor)
                         .clipShape(Circle())
@@ -125,6 +151,10 @@ struct ContentView: View {
                 }
             }
         }
+    }
+    
+    func resetBest() {
+        bestScore = 0
     }
     
     func imageForColor(color: Color) -> String {
@@ -241,6 +271,21 @@ struct ContentView: View {
         errorMessage = message
         
         isShown = true
+    }
+    
+    init() {
+        let defaults = UserDefaults.standard
+        let savedColor = defaults.string(forKey: "SET_COLOR")
+        
+        let convertedColor: Color = switch savedColor {
+        case "yellow": .yellow
+        case "blue": .blue
+        case "purple": .purple
+        case "red": .red
+        case "green": .green
+        default: .yellow
+    }
+        self.mainColor = convertedColor
     }
 }
 
